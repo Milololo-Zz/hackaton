@@ -1,1 +1,1 @@
-pankechi joto
+tusukuyomi esta todo pendejo
