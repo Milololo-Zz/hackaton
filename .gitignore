@@ -1,0 +1,12 @@
+# Entorno virtual de Python
+venv/
+
+# Archivos compilados de Python
+__pycache__/
+*.pyc
+
+# Archivos de base de datos (no queremos versionar la BD de prueba)
+db.sqlite3
+
+# Variables de entorno (¡NUNCA subir secretos!)
+.env
