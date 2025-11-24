@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # --- Base de Datos ---
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=hackaton_db
+      - POSTGRES_USER=hackaton_user
+      - POSTGRES_PASSWORD=hackaton_password
+    ports:
+      - "5432:5432"
+
+  # --- Backend (Django) ---
+  backend:
+    build: ./backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DB_NAME=hackaton_db
+      - DB_USER=hackaton_user
+      - DB_PASSWORD=hackaton_password
+      - DB_HOST=db
+
+  # --- Frontend (React/Vite) ---
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Evita que se borren los módulos dentro del contenedor
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
