@@ -1,42 +1,66 @@
-# 🚀 Hackatón 2025 - Proyecto Base
+# 🚀 Hackatón 2025 - Proyecto Base (Full Stack)
 
 ## 📋 Requisitos Previos
 1. **Docker Desktop** (Instalado y abierto).
 2. **Git** (Instalado).
-3. **VS Code**.
+3. **VS Code** (Recomendado).
 
-## ⚡ Inicio Rápido (Solo la primera vez)
-1. Clona el repositorio:
+## ⚡ Inicio Rápido (Para todos)
+1. **Clona el repositorio:**
    ```bash
    git clone <URL_DEL_REPO>
    cd hackaton
    ```
-2. Levanta el entorno (Backend + Frontend + DB):
+2. **Enciende la fábrica (Levanta todo):**
    ```bash
    docker compose up --build
    ```
-3. Accede a los sitios:
-   - **Frontend:** http://localhost:5173
-   - **Backend API:** http://localhost:8000/api/
-   - **Admin Panel:** http://localhost:8000/admin/
-   - **Login JWT:** http://localhost:8000/auth/jwt/create/
+   *(La primera vez tardará unos minutos. Espera a que termine).*
 
-## 🔐 Credenciales
+3. **Accede a los sitios:**
+   - 🎨 **Frontend (React):** http://localhost:5173
+   - ⚙️ **Backend API:** http://localhost:8000/api/
+   - 🛡️ **Admin Panel:** http://localhost:8000/admin/
+   - 🔑 **Login JWT:** http://localhost:8000/auth/jwt/create/
+
+## 🔐 Credenciales Maestras
 - **Superusuario (Admin):**
   - User: `admin`
   - Pass: `admin`
 
-## 🛠️ Comandos Frecuentes
+---
 
+## 🛠️ Guía de Comandos (Copia y Pega)
+
+### 🌍 Comandos Generales (DevOps)
 | Acción | Comando |
 | :--- | :--- |
 | **Encender todo** | `docker compose up` |
+| **Encender en segundo plano** | `docker compose up -d` |
 | **Apagar todo** | `docker compose down` |
-| **Ver logs (Backend)** | `docker compose logs -f backend` |
-| **Crear migración** | `docker compose exec backend python manage.py makemigrations` |
-| **Aplicar migración** | `docker compose exec backend python manage.py migrate` |
-| **Instalar librería (Front)** | `docker compose exec frontend npm install nombre_libreria` |
+| **Borrar todo (Reset BD)** | `docker compose down -v` (¡Cuidado! Borra datos) |
 
-## ⚠️ Solución de Problemas
-- Si la BD falla: `docker compose down -v` (Borra todo) y vuelve a subir.
-- Si no hay cambios en Front: Guarda el archivo en VS Code para forzar recarga.
+### 🐍 Equipo Backend (Django)
+| Acción | Comando |
+| :--- | :--- |
+| **Crear Migración** | `docker compose exec backend python manage.py makemigrations` |
+| **Aplicar Migración** | `docker compose exec backend python manage.py migrate` |
+| **Crear Superusuario** | `docker compose exec backend python manage.py createsuperuser` |
+| **Ver Logs (Errores)** | `docker compose logs -f backend` |
+| **Instalar Librería** | 1. Agregala a `requirements.txt` <br> 2. `docker compose up -d --build backend` |
+
+### ⚛️ Equipo Frontend (React)
+| Acción | Comando |
+| :--- | :--- |
+| **Instalar Librería** | `docker compose exec frontend npm install nombre_libreria` <br> *(Ej: axios, framer-motion, react-icons)* |
+| **Ver Logs (Consola)** | `docker compose logs -f frontend` |
+| **Reiniciar (Si falla)** | `docker compose restart frontend` |
+| **Error "Network/CORS"** | Revisa que el Backend esté corriendo en el puerto 8000. |
+
+## 🆘 Solución de Problemas Comunes
+1. **"No veo mis cambios en React":**
+   - Asegúrate de haber guardado el archivo en VS Code (`Ctrl + S`).
+2. **"La base de datos da error":**
+   - Si acabas de clonar, ejecuta: `docker compose exec backend python manage.py migrate`.
+3. **"No puedo instalar paquetes npm":**
+   - Usa siempre el comando de docker (`exec frontend npm install`), no uses `npm install` directo en tu Windows/Mac.
