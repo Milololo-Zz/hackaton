@@ -1,32 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Login } from './Login'
 
 function App() {
-  const [tareas, setTareas] = useState([])
+  const [token, setToken] = useState(localStorage.getItem('access_token'))
 
-  useEffect(() => {
-    // Peticion al Backend (Django)
-    fetch('http://localhost:8000/api/tareas/')
-      .then(response => response.json())
-      .then(data => setTareas(data))
-      .catch(error => console.error('Error fetching data:', error));
-  }, [])
+  const handleLogout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    setToken(null)
+  }
 
   return (
     <div style={{ padding: '20px' }}>
-      <h1>Lista de Tareas (Desde Django)</h1>
+      <h1>Hackatón 2025 - Portal</h1>
       
-      {tareas.length === 0 ? (
-        <p>Cargando tareas...</p>
+      {!token ? (
+        <Login onLoginSuccess={setToken} />
       ) : (
-        <ul>
-          {tareas.map(tarea => (
-            <li key={tarea.id}>
-              <strong>{tarea.titulo}</strong>
-              <p>{tarea.descripcion}</p>
-              <hr />
-            </li>
-          ))}
-        </ul>
+        <div>
+          <h3 style={{ color: 'green' }}>¡Bienvenido! Estás autenticado.</h3>
+          <p>Tu Token JWT está guardado y listo para usarse en peticiones.</p>
+          <button onClick={handleLogout}>Cerrar Sesión</button>
+        </div>
       )}
     </div>
   )
