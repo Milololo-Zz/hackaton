@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Login } from './Login'
+import { Login } from './pages/LoginPage'
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('access_token'))
