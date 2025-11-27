@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',        
     'corsheaders',
     'djoser',
+    'drf_spectacular',
     'api',
     
     
@@ -138,11 +139,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Configuración CORS (Permitir todo para desarrollo)
 CORS_ALLOW_ALL_ORIGINS = True
 
-# --- Configuración DRF y Djoser ---
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Hackatón API',
+    'DESCRIPTION': 'Documentación automática de nuestra API',
+    'VERSION': '1.0.0',
 }
 
 DJOSER = {
