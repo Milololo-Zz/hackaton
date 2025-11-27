@@ -9,3 +9,7 @@ djangorestframework
 django-cors-headers
 djoser
 djangorestframework_simplejwt
+openai
+google-generativeai
+requests
+python-dotenv
