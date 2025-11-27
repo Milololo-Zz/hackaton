@@ -5,6 +5,7 @@ typing_extensions==4.15.0
 psycopg2-binary>=2.9
 psycopg2-binary>=2.9
 psycopg2-binary>=2.9
+Pillow>=10.0.0   
 djangorestframework
 django-cors-headers
 djoser
@@ -14,3 +15,4 @@ google-generativeai
 requests
 python-dotenv
 drf-spectacular
+django-leaflet      
