@@ -15,4 +15,10 @@ frontend/.env
 .vscode/
 .idea/
 **/.docker-data/
-**/__pycache__/
+**/__pycache__
+
+postgres_data/
+*.pyc
+__pycache__/
+node_modules/
+.env/
