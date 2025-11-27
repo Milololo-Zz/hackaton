@@ -6,6 +6,7 @@ psycopg2-binary>=2.9
 psycopg2-binary>=2.9
 psycopg2-binary>=2.9
 Pillow>=10.0.0   
+googlemaps==4.10.0
 djangorestframework
 django-cors-headers
 djoser
