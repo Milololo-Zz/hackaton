@@ -5,6 +5,10 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 # Router para tus ViewSets (Aquí irán tus futuros endpoints)
 router = DefaultRouter()
+router.register(r'reportes', ReporteViewSet)
+router.register(r'noticias', NoticiaViewSet)
+router.register(r'pozos', PozoViewSet)
+router.register(r'perfil', PerfilViewSet, basename='perfil')
 # router.register(r'ejemplo', EjemploViewSet)
 
 urlpatterns = [
