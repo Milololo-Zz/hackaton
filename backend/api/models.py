@@ -73,3 +73,17 @@ class Validacion(models.Model):
                 self.reporte.status = 'REVISADO'
             
             self.reporte.save()
+
+class Noticia(models.Model):
+    titulo = models.CharField(max_length=200)
+    contenido = models.TextField()
+    imagen = models.ImageField(upload_to='noticias/', blank=True, null=True)
+    fecha_publicacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Noticia"
+        verbose_name_plural = "Noticias"
+        ordering = ['-fecha_publicacion']
+
+    def __str__(self):
+        return self.titulo
