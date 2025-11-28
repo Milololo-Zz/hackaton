@@ -1,60 +1,31 @@
-import { useState } from 'react'
+// src/App.jsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { ChakraProvider, Box } from '@chakra-ui/react' // Agregamos Box para el layout
+import { Toaster } from 'sonner' // Agregamos las notificaciones bonitas
+
+// Tus importaciones de páginas
 import { Login } from './pages/LoginPage'
-import { Toaster, toast } from 'sonner'
-import { 
-  Box, 
-  Button, 
-  Container, 
-  Heading, 
-  Text, 
-  Stack, 
-  Badge,
-  Center
-} from '@chakra-ui/react'
+import Inicio from './pages/inicio'
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('access_token'))
-
-  const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
-    setToken(null)
-    toast.info('Sesión cerrada correctamente')
-  }
-
   return (
-    <>
+    <ChakraProvider>
+      {/* 1. Agregamos el Toaster globalmente para que las notificaciones funcionen en todas las páginas */}
       <Toaster position="top-right" richColors />
-      
-      {!token ? (
-        <Login onLoginSuccess={setToken} />
-      ) : (
-        <Container maxW={'3xl'} py={12}>
-          <Stack spacing={8}>
-            <Heading as="h1" size="2xl" textAlign="center" color="teal.500">
-              Hackatón 2025
-            </Heading>
+
+      <BrowserRouter>
+        {/* 2. Envolvemos las rutas en el Box con padding (p={4}) del segundo código para mantener el estilo */}
+        <Box p={4} minH="100vh" bg="gray.50"> 
+          <Routes>
+            {/* Ruta Raíz (Login) */}
+            <Route path="/" element={<Login />} />
             
-            <Box p={6} shadow="md" borderWidth="1px" borderRadius="lg" bg="white">
-              <Stack direction="row" alignItems="center" mb={4}>
-                <Heading fontSize="xl">Estado del Sistema</Heading>
-                <Badge colorScheme="green">En línea</Badge>
-              </Stack>
-              <Text mt={2} color="gray.600">
-                ¡Bienvenido! Has iniciado sesión correctamente. Tu token JWT está seguro.
-                Aquí es donde tu equipo construirá el Dashboard mañana.
-              </Text>
-              
-              <Center mt={8}>
-                <Button colorScheme="red" variant="outline" onClick={handleLogout}>
-                  Cerrar Sesión
-                </Button>
-              </Center>
-            </Box>
-          </Stack>
-        </Container>
-      )}
-    </>
+            {/* Ruta Inicio (Dashboard) */}
+            <Route path="/inicio" element={<Inicio />} />
+          </Routes>
+        </Box>
+      </BrowserRouter>
+    </ChakraProvider>
   )
 }
 
