@@ -6,8 +6,8 @@ from .models import Reporte, PerfilCiudadano, Noticia, Pozo, Validacion
 class PerfilCiudadanoSerializer(serializers.ModelSerializer):
     class Meta:
         model = PerfilCiudadano
-        fields = ['colonia', 'telefono', 'rango', 'puntos_confianza']
-        read_only_fields = ['rango', 'puntos_confianza']
+        fields = ['colonia', 'telefono']
+
 
 # 2. Serializador de Usuario (Con Perfil Incluido)
 class UserSerializer(serializers.ModelSerializer):
@@ -46,7 +46,7 @@ class ReporteSerializer(serializers.ModelSerializer):
             'foto', 'status', 'fecha_hora', 
             'usuario', 'usuario_nombre', 'validaciones', 'prioridad'
         ]
-        read_only_fields = ['status', 'fecha_hora', 'validaciones', 'prioridad', 'ubicacion']
+        read_only_fields = ['status', 'fecha_hora', 'validaciones', 'prioridad', 'ubicacion','nota_seguimiento', 'foto_solucion','nota_seguimiento', 'foto_solucion']
 
     def get_latitud(self, obj):
         return obj.ubicacion.y if obj.ubicacion else None

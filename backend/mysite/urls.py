@@ -4,7 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from api.views import ReporteViewSet, NoticiaViewSet, PozoViewSet, PerfilViewSet
+from api.views import ReporteViewSet, NoticiaViewSet, PozoViewSet, PerfilViewSet, DashboardAdminViewSet
 
 # Router para tus ViewSets (Aquí irán tus futuros endpoints)
 router = DefaultRouter()
@@ -12,6 +12,7 @@ router.register(r'reportes', ReporteViewSet)
 router.register(r'noticias', NoticiaViewSet)
 router.register(r'pozos', PozoViewSet)
 router.register(r'perfil', PerfilViewSet, basename='perfil')
+router.register(r'admin-dashboard', DashboardAdminViewSet, basename='admin-dashboard')
 # router.register(r'ejemplo', EjemploViewSet)
 
 urlpatterns = [

@@ -34,6 +34,10 @@ class Reporte(models.Model):
     validaciones = models.IntegerField(default=0, help_text="Vecinos que confirman")
     prioridad = models.IntegerField(default=0, help_text="Nivel de urgencia calculado")
 
+    # NUEVOS CAMPOS DE SEGUIMIENTO (Solo los llena el Admin)
+    nota_seguimiento = models.TextField(blank=True, help_text="Mensaje oficial del gobierno al ciudadano")
+    foto_solucion = models.ImageField(upload_to='soluciones/', null=True, blank=True, help_text="Evidencia de la reparación")
+
     class Meta:
         verbose_name = "Reporte"
         verbose_name_plural = "Reportes"
@@ -77,17 +81,9 @@ class PerfilCiudadano(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
     colonia = models.CharField(max_length=100, blank=True)
     telefono = models.CharField(max_length=15, blank=True, null=True)
-    
-    RANGOS = [
-        ('NOVATO', 'Novato (Solo reporta)'),
-        ('GUARDIAN', 'Guardián (Sus reportes valen doble)'),
-        ('MASTER', 'Máster (Validador oficial)'),
-    ]
-    rango = models.CharField(max_length=20, choices=RANGOS, default='NOVATO')
-    puntos_confianza = models.IntegerField(default=10)
 
     def __str__(self):
-        return f"{self.user.username} - {self.rango}"
+        return f"{self.user.username} - {self.colonia}"
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
