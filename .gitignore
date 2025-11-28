@@ -22,3 +22,11 @@ postgres_data/
 __pycache__/
 node_modules/
 .env/
+
+# --- Agregado para Backend GeoDjango ---
+backend/media/
+!backend/media/.gitkeep
+__pycache__/
+*.py[cod]
+.docker_data/
+.vscode/

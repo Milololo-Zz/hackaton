@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.gis',
     'rest_framework',        
     'corsheaders',
     'djoser',
@@ -85,7 +86,7 @@ import os
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': os.environ.get('DB_NAME', 'hackaton_db'),
         'USER': os.environ.get('DB_USER', 'hackaton_user'),
         'PASSWORD': os.environ.get('DB_PASSWORD', 'hackaton_password'),
