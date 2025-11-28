@@ -161,6 +161,11 @@ SPECTACULAR_SETTINGS = {
 
 DJOSER = {
     'LOGIN_FIELD': 'username',
-    'USER_CREATE_PASSWORD_RETYPE': True,
-    'SERIALIZERS': {},
+    'USER_ID_FIELD': 'id',
+    # ESTAS DOS LÍNEAS SON LA SOLUCIÓN:
+    'SEND_ACTIVATION_EMAIL': False, # No pedir email de confirmación
+    'PERMISSIONS': {
+        'user': ['rest_framework.permissions.AllowAny'],
+        'user_create': ['rest_framework.permissions.AllowAny'], # Cualquiera puede registrarse
+    }
 }

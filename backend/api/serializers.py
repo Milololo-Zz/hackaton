@@ -36,7 +36,7 @@ class ReporteSerializer(serializers.ModelSerializer):
     latitud = serializers.SerializerMethodField()
     longitud = serializers.SerializerMethodField()
     usuario_nombre = serializers.CharField(source='usuario.username', read_only=True)
-    ubicacion = serializers.CharField(read_only=True)
+    ubicacion = serializers.CharField()
 
     class Meta:
         model = Reporte
@@ -46,7 +46,7 @@ class ReporteSerializer(serializers.ModelSerializer):
             'foto', 'status', 'fecha_hora', 
             'usuario', 'usuario_nombre', 'validaciones', 'prioridad'
         ]
-        read_only_fields = ['status', 'fecha_hora', 'validaciones', 'prioridad', 'ubicacion','nota_seguimiento', 'foto_solucion','nota_seguimiento', 'foto_solucion']
+        read_only_fields = ['status', 'fecha_hora', 'validaciones', 'prioridad','nota_seguimiento', 'foto_solucion','nota_seguimiento', 'foto_solucion']
 
     def get_latitud(self, obj):
         return obj.ubicacion.y if obj.ubicacion else None

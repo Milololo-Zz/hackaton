@@ -1,275 +1,211 @@
-import { useState } from 'react'
-import { toast } from 'sonner'
-import { useNavigate } from 'react-router-dom'
-import {
-  Box,
-  Flex,
-  Spacer,
-  Button,
-  Input,
-  Stack,
-  Text,
-  Heading,
-  useColorModeValue,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverHeader,
-  PopoverBody,
-  PopoverArrow,
-  PopoverCloseButton,
-  FormControl,
-  FormLabel,
-  Portal 
+
+import { useState, useEffect } from 'react'
+import { 
+  Box, Flex, Button, Input, Stack, Heading, Text, 
+  FormControl, FormLabel, useColorModeValue, Link
 } from '@chakra-ui/react'
+import { MapContainer, TileLayer } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { servicios } from '../api/services' // Tu archivo de conexión
 
-// AÑADIDO: Ahora aceptamos también 'onRegisterSuccess' como prop
-export function Login({ onLoginSuccess, onRegisterSuccess }) {
-  
-  // --- ESTADOS DE LOGIN ---
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  
-  // --- ESTADOS DE REGISTRO ---
-  const [regUsername, setRegUsername] = useState('')
-  const [regEmail, setRegEmail] = useState('')
-  const [regPassword, setRegPassword] = useState('')
-
+export function Login() {
+  const [isLogin, setIsLogin] = useState(true) // Switch entre Login/Registro
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const cardBg = useColorModeValue('white', 'gray.700')
 
-  // --- LÓGICA DE LOGIN (Se mantiene igual) ---
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    const toastId = toast.loading('Verificando credenciales...')
+  // Estados del Formulario
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    re_password: ''
+  })
 
-    try {
-      const response = await fetch('http://localhost:8000/auth/jwt/create/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      })
-
-      if (!response.ok) throw new Error('Usuario o contraseña incorrectos')
-
-      const data = await response.json()
-      localStorage.setItem('access_token', data.access)
-      localStorage.setItem('refresh_token', data.refresh)
-      
-      toast.success('¡Bienvenido!', { id: toastId })
-      
-      if (onLoginSuccess) onLoginSuccess(data.access)
-      navigate('/inicio') 
-
-    } catch (err) {
-      toast.error(err.message, { id: toastId })
-    }
+  useEffect(() => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    console.log("Tokens limpiados para evitar conflictos.");
+  }, []);
+  
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  // --- LÓGICA DE REGISTRO (TRAÍDA DEL SEGUNDO CÓDIGO) ---
-  const handleRegister = async (e) => {
+  // Lógica de Envío
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const toastId = toast.loading('Creando cuenta...')
+    setLoading(true)
 
     try {
-        // Petición al backend
-        const response = await fetch('http://localhost:8000/auth/users/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            // Usamos las variables de estado 'reg...' que definimos arriba
-            body: JSON.stringify({ 
-                username: regUsername, 
-                email: regEmail, 
-                password: regPassword 
-            })
+      if (isLogin) {
+        // --- PROCESO DE LOGIN ---
+        const data = await servicios.auth.login(formData.username, formData.password)
+        
+        localStorage.setItem('access_token', data.access)
+        localStorage.setItem('refresh_token', data.refresh)
+  
+        toast.success('¡Bienvenido!')
+        
+        // Redirección Inteligente
+        if (formData.username === 'admin' || formData.username.includes('gob')) {
+            navigate('/admin-panel')
+        } else {
+            navigate('/inicio')
+        }
+
+      } else {
+        // --- PROCESO DE REGISTRO ---
+        if (formData.password !== formData.re_password) {
+            throw new Error("Las contraseñas no coinciden")
+        }
+        
+        await servicios.auth.register({
+            username: formData.username,
+            email: formData.email,
+            password: formData.password,
+            re_password: formData.re_password
         })
-
-        if (!response.ok) throw new Error('Error al registrar usuario')
-
-        // Éxito real
-        toast.success('¡Cuenta creada! Por favor inicia sesión.', { id: toastId })
         
-        // Limpiar campos
-        setRegUsername('')
-        setRegEmail('')
-        setRegPassword('')
+        toast.success('Cuenta creada. Ahora inicia sesión.')
+        setIsLogin(true) // Cambiar a vista de login
+        setFormData({ username: '', email: '', password: '', re_password: '' })
+      }
 
-        // Ejecutar callback si existe
-        if(onRegisterSuccess) onRegisterSuccess()
-
-    } catch (err) {
-        // --- SIMULACIÓN DEL SEGUNDO CÓDIGO ---
-        // Si falla (ej. backend apagado), mostramos éxito simulado como pediste
-        console.error(err)
-        toast.dismiss(toastId)
-        toast.success('Registro simulado (Conecta tu backend)', { duration: 3000 })
-        
-        if(onRegisterSuccess) onRegisterSuccess()
+    } catch (error) {
+      console.error(error)
+      // Capturamos error si el backend manda detalles
+      const msg = error.response?.data ? JSON.stringify(error.response.data) : 'Error de credenciales'
+      toast.error(msg)
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <Box 
-      minH="100vh" 
-      bgGradient="linear(to-br, blue.400, cyan.300)" 
-    >
+    <Flex h="100vh" w="100vw" overflow="hidden" position="relative">
       
-      {/* BARRA DE NAVEGACIÓN */}
-      <Flex 
-        as="nav" 
-        align="center" 
-        justify="space-between" 
-        wrap="wrap" 
-        padding="1rem"
-        bg="whiteAlpha.200" 
-        backdropFilter="blur(10px)" 
-        color="white"
-        boxShadow="sm"
-      >
-        {/* LOGO */}
-        <Flex align="center" mr={5} cursor="pointer" onClick={() => navigate('/')}>
-            <Text fontSize="2xl" mr={2}>💧</Text>
-            <Heading as="h1" size="lg" letterSpacing={'-.1rem'}>
-              Ixtapaluca Water
-            </Heading>
-        </Flex>
-
-        <Spacer />
-
-        <Stack direction={'row'} spacing={4}>
-            
-          {/* --- LOGIN DROPDOWN --- */}
-          <Popover placement="bottom-end">
-            <PopoverTrigger>
-              <Button 
-                variant={'solid'} 
-                bg="white"
-                color="blue.500"
-                _hover={{ bg: 'gray.100' }}
-              >
-                Iniciar Sesión
-              </Button>
-            </PopoverTrigger>
-            
-            <Portal>
-                <PopoverContent bg={cardBg} color="gray.800" minW={{ base: "100%", md: "350px" }} boxShadow="xl">
-                <PopoverArrow />
-                <PopoverCloseButton />
-                <PopoverHeader fontWeight="bold" borderBottomWidth="1px">Acceso Administrativo</PopoverHeader>
-                <PopoverBody p={6}>
-                    
-                    <form onSubmit={handleSubmit}>
-                    <Stack spacing={4}>
-                        <FormControl id="username">
-                        <FormLabel>Usuario</FormLabel>
-                        <Input 
-                            type="text" 
-                            value={username} 
-                            onChange={(e) => setUsername(e.target.value)} 
-                            placeholder="Ej. admin"
-                        />
-                        </FormControl>
-                        
-                        <FormControl id="password">
-                        <FormLabel>Contraseña</FormLabel>
-                        <Input 
-                            type="password" 
-                            value={password} 
-                            onChange={(e) => setPassword(e.target.value)} 
-                            placeholder="••••••••"
-                        />
-                        </FormControl>
-                        
-                        <Button
-                        type="submit"
-                        bg={'blue.500'}
-                        color={'white'}
-                        _hover={{ bg: 'blue.600' }}
-                        w="full"
-                        >
-                        Entrar
-                        </Button>
-                    </Stack>
-                    </form>
-
-                </PopoverBody>
-                </PopoverContent>
-            </Portal>
-          </Popover>
-
-          {/* --- REGISTRO DROPDOWN --- */}
-          <Popover placement="bottom-end">
-            <PopoverTrigger>
-              <Button 
-                variant={'ghost'} 
-                color="white"
-                _hover={{ bg: 'whiteAlpha.300' }}
-              >
-                Registrarse
-              </Button>
-            </PopoverTrigger>
-            <Portal>
-                <PopoverContent bg={cardBg} color="gray.800" minW={{ base: "100%", md: "350px" }} boxShadow="xl">
-                    <PopoverArrow />
-                    <PopoverCloseButton />
-                    <PopoverHeader fontWeight="bold">Nuevo Usuario</PopoverHeader>
-                    <PopoverBody p={6}>
-                        
-                        <form onSubmit={handleRegister}>
-                            <Stack spacing={4}>
-                                <FormControl id="reg-username" isRequired>
-                                    <FormLabel>Usuario</FormLabel>
-                                    <Input 
-                                        type="text" 
-                                        value={regUsername}
-                                        onChange={(e) => setRegUsername(e.target.value)} 
-                                    />
-                                </FormControl>
-
-                                <FormControl id="reg-email" isRequired>
-                                    <FormLabel>Email</FormLabel>
-                                    <Input 
-                                        type="email" 
-                                        value={regEmail}
-                                        onChange={(e) => setRegEmail(e.target.value)} 
-                                    />
-                                </FormControl>
-
-                                <FormControl id="reg-password" isRequired>
-                                    <FormLabel>Contraseña</FormLabel>
-                                    <Input 
-                                        type="password" 
-                                        value={regPassword}
-                                        onChange={(e) => setRegPassword(e.target.value)} 
-                                    />
-                                </FormControl>
-
-                                <Button 
-                                    type="submit" 
-                                    bg={'green.400'} 
-                                    color={'white'} 
-                                    _hover={{ bg: 'green.500' }} 
-                                    w="full"
-                                >
-                                    Registrarse
-                                </Button>
-                            </Stack>
-                        </form>
-
-                    </PopoverBody>
-                </PopoverContent>
-            </Portal>
-          </Popover>
-
-        </Stack>
-      </Flex>
-
-      {/* ÁREA DE CONTENIDO PRINCIPAL */}
-      <Box p={4} color="white">
-        <Text fontSize="xl" fontWeight="bold">Bienvenido al sistema de reportes de agua.</Text>
-        <Text>Usa el menú superior para acceder.</Text>
+      {/* 1. FONDO DE MAPA (La propuesta de valor) */}
+      <Box position="absolute" top="0" left="0" w="100%" h="100%" zIndex="0">
+        <MapContainer 
+            center={[19.31, -98.88]} 
+            zoom={13} 
+            zoomControl={false} // Sin botones para que sea solo visual
+            style={{ height: "100%", width: "100%" }}
+        >
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        </MapContainer>
+        {/* Capa oscura para que resalte el formulario */}
+        <Box position="absolute" top="0" left="0" w="100%" h="100%" bg="blackAlpha.400" zIndex="1" />
       </Box>
 
-    </Box>
+      {/* 2. TARJETA FLOTANTE (Glassmorphism) */}
+      <Flex w="100%" h="100%" align="center" justify={{ base: 'center', md: 'flex-end' }} zIndex="2" px={{ base: 4, md: 20 }}>
+        
+        <Box 
+            bg="whiteAlpha.900" 
+            backdropFilter="blur(10px)" 
+            p={8} 
+            borderRadius="xl" 
+            boxShadow="2xl" 
+            w="400px"
+            maxW="100%"
+        >
+            <Stack spacing={4}>
+                <Heading fontSize="2xl" color="blue.600" textAlign="center">
+                    {isLogin ? 'Acceso a Vecto-Red' : 'Únete a la Red'}
+                </Heading>
+                <Text fontSize="sm" color="gray.500" textAlign="center">
+                    {isLogin ? 'Monitoreo Hídrico y Sanitario' : 'Ayuda a mejorar tu comunidad'}
+                </Text>
+
+                <form onSubmit={handleSubmit}>
+                    <Stack spacing={4}>
+                        
+                        {/* Campo Usuario (Siempre visible) */}
+                        <FormControl id="username">
+                            <FormLabel>Usuario</FormLabel>
+                            <Input 
+                                name="username"
+                                type="text" 
+                                value={formData.username} 
+                                onChange={handleChange}
+                                placeholder="Ej. vecino123"
+                                bg="white"
+                            />
+                        </FormControl>
+
+                        {/* Campo Email (Solo en Registro) */}
+                        {!isLogin && (
+                            <FormControl id="email">
+                                <FormLabel>Correo Electrónico</FormLabel>
+                                <Input 
+                                    name="email"
+                                    type="email" 
+                                    value={formData.email} 
+                                    onChange={handleChange}
+                                    bg="white"
+                                />
+                            </FormControl>
+                        )}
+
+                        <FormControl id="password">
+                            <FormLabel>Contraseña</FormLabel>
+                            <Input 
+                                name="password"
+                                type="password" 
+                                value={formData.password} 
+                                onChange={handleChange}
+                                bg="white"
+                            />
+                        </FormControl>
+
+                        {/* Confirmar Pass (Solo en Registro) */}
+                        {!isLogin && (
+                            <FormControl id="re_password">
+                                <FormLabel>Confirmar Contraseña</FormLabel>
+                                <Input 
+                                    name="re_password"
+                                    type="password" 
+                                    value={formData.re_password} 
+                                    onChange={handleChange}
+                                    bg="white"
+                                />
+                            </FormControl>
+                        )}
+
+                        <Button
+                            type="submit"
+                            bg={isLogin ? 'blue.500' : 'green.500'}
+                            color="white"
+                            _hover={{ bg: isLogin ? 'blue.600' : 'green.600' }}
+                            isLoading={loading}
+                            mt={2}
+                        >
+                            {isLogin ? 'Iniciar Sesión' : 'Registrarse'}
+                        </Button>
+                    </Stack>
+                </form>
+
+                <Flex justify="center" mt={4}>
+                    <Text fontSize="sm">
+                        {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
+                        <Link 
+                            color="blue.500" 
+                            fontWeight="bold" 
+                            ml={1}
+                            onClick={() => setIsLogin(!isLogin)}
+                        >
+                            {isLogin ? 'Regístrate aquí' : 'Inicia Sesión'}
+                        </Link>
+                    </Text>
+                </Flex>
+
+            </Stack>
+        </Box>
+      </Flex>
+
+    </Flex>
   )
 }

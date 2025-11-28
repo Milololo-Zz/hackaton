@@ -162,8 +162,8 @@ class ReporteViewSet(viewsets.ModelViewSet):
             # a) Reportes recientes (menos de 30 días)
             # b) Reportes que NO estén resueltos (aunque sean viejos, siguen siendo un problema)
             queryset = queryset.filter(
-                models.Q(fecha_hora__gte=limite_fecha) | 
-                ~models.Q(status='RESUELTO')
+                Q(fecha_hora__gte=limite_fecha) | 
+                ~Q(status='RESUELTO')
             )
             
         return queryset        

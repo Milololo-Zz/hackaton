@@ -1,29 +1,25 @@
-// src/App.jsx
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { ChakraProvider, Box } from '@chakra-ui/react' // Agregamos Box para el layout
-import { Toaster } from 'sonner' // Agregamos las notificaciones bonitas
+import { ChakraProvider } from '@chakra-ui/react'
+import { Toaster } from 'sonner'
 
-// Tus importaciones de páginas
+// Importaciones
 import { Login } from './pages/LoginPage'
 import Inicio from './pages/inicio'
+import AdminDashboard from './pages/AdminDashboard' // <--- NUEVA PÁGINA
 
 function App() {
   return (
     <ChakraProvider>
-      {/* 1. Agregamos el Toaster globalmente para que las notificaciones funcionen en todas las páginas */}
       <Toaster position="top-right" richColors />
 
       <BrowserRouter>
-        {/* 2. Envolvemos las rutas en el Box con padding (p={4}) del segundo código para mantener el estilo */}
-        <Box p={4} minH="100vh" bg="gray.50"> 
-          <Routes>
-            {/* Ruta Raíz (Login) */}
-            <Route path="/" element={<Login />} />
-            
-            {/* Ruta Inicio (Dashboard) */}
-            <Route path="/inicio" element={<Inicio />} />
-          </Routes>
-        </Box>
+        {/* ELIMINAMOS EL BOX CON PADDING PARA QUE EL MAPA SEA FULL SCREEN */}
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/inicio" element={<Inicio />} />
+          {/* RUTA NUEVA PARA EL GOBIERNO */}
+          <Route path="/admin-panel" element={<AdminDashboard />} />
+        </Routes>
       </BrowserRouter>
     </ChakraProvider>
   )
