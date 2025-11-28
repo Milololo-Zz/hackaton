@@ -6,7 +6,7 @@ import {
   FormControl, FormLabel, Input, Select, Textarea, useDisclosure,
   Table, Thead, Tbody, Tr, Th, Td, Badge, Tabs, TabList, TabPanels, Tab, TabPanel,
   Container, SimpleGrid, Card, CardBody, CardHeader,
-  Menu, MenuButton, MenuList, MenuItem, MenuDivider
+  Menu, MenuButton, MenuList, MenuItem, MenuDivider, Image
 } from '@chakra-ui/react'
 import { AddIcon, WarningIcon, ChevronDownIcon, EditIcon, CheckCircleIcon } from '@chakra-ui/icons'
 import { useNavigate } from 'react-router-dom'
@@ -15,10 +15,9 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { servicios } from '../api/services'
 
-// --- ESTILO INSTITUCIONAL ---
 const COLORS = {
-  primary: '#691C32', // Guinda
-  secondary: '#BC955C', // Dorado
+  primary: '#691C32',
+  secondary: '#BC955C',
   bg: '#F9FAFB'
 }
 
@@ -32,18 +31,15 @@ const STATUS_CONFIG = {
 
 export default function VentanillaUnica() {
   const [user, setUser] = useState(null)
-  
-  // --- SEPARAMOS LOS DATOS ---
-  const [misSolicitudes, setMisSolicitudes] = useState([]) // Para la Tabla
-  const [puntosMapa, setPuntosMapa] = useState([])         // Para el Mapa
+  const [misSolicitudes, setMisSolicitudes] = useState([])
+  const [puntosMapa, setPuntosMapa] = useState([])
   const [noticias, setNoticias] = useState([])
-  
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
 
-  // Formularios
   const { isOpen, onOpen, onClose } = useDisclosure()
   const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure()
+  
   const [formData, setFormData] = useState({ titulo: '', tipo: 'FUGA', desc: '', direccion: '', foto: null })
   const [editData, setEditData] = useState({ first_name: '', colonia: '', telefono: '' })
   const [coords, setCoords] = useState(null)
@@ -54,29 +50,30 @@ export default function VentanillaUnica() {
 
   const cargarDatos = async () => {
     try {
-      // Pedimos TODO al mismo tiempo
       const [perfilRes, misRepRes, todoRepRes, noticiasRes] = await Promise.all([
         servicios.auth.getPerfil(),
-        servicios.reportes.getMisReportes(), // Solo los míos
-        servicios.reportes.getAll(),         // TODOS (Públicos) para el mapa
+        servicios.reportes.getMisReportes(),
+        servicios.reportes.getAll(),
         servicios.publico.getNoticias()
       ])
-      
       setUser(perfilRes.data)
       setMisSolicitudes(misRepRes.data)
-      setPuntosMapa(todoRepRes.data) // Llenamos el mapa con todo
+      setPuntosMapa(todoRepRes.data)
       setNoticias(noticiasRes.data || [])
-      
     } catch (error) {
       console.error(error)
-      // Si falla, no bloqueamos la app, solo avisamos
-      // toast.error('Error de conexión parcial')
     } finally {
       setLoading(false)
     }
   }
 
-  // --- GPS ---
+  // --- HELPER PARA IMÁGENES (CORRECCIÓN CRÍTICA) ---
+  const getImgUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8000${url}`; // Asegura que apunte al backend
+  }
+
   const obtenerUbicacion = () => {
     toast.info('Localizando...')
     navigator.geolocation.getCurrentPosition(
@@ -88,7 +85,6 @@ export default function VentanillaUnica() {
     )
   }
 
-  // --- ENVIAR REPORTE ---
   const handleSubmit = async () => {
     if (!coords) return toast.warning('Ubicación obligatoria')
     setSubmitting(true)
@@ -107,7 +103,6 @@ export default function VentanillaUnica() {
       setFormData({ titulo: '', tipo: 'FUGA', desc: '', direccion: '', foto: null })
       setCoords(null)
     } catch (e) {
-        // Manejo de error de tiempo (Spam)
         let msg = 'Error al enviar'
         if (e.response?.data && Array.isArray(e.response.data)) msg = e.response.data[0]
         toast.error(msg)
@@ -116,7 +111,6 @@ export default function VentanillaUnica() {
     }
   }
 
-  // --- PERFIL ---
   const handleSaveProfile = async () => {
     setSubmitting(true)
     try {
@@ -137,12 +131,9 @@ export default function VentanillaUnica() {
     onEditOpen()
   }
 
-  const getImgUrl = (url) => url ? (url.startsWith('http') ? url : `http://localhost:8000${url}`) : null
-
   return (
     <Flex h="100vh" w="100vw" bg={COLORS.bg} direction="column" overflow="hidden">
       
-      {/* HEADER */}
       <Flex h="70px" bg={COLORS.primary} align="center" justify="space-between" px={8} boxShadow="md" zIndex="10">
         <Box>
             <Heading size="md" color="white" fontFamily="serif">GOBIERNO DIGITAL</Heading>
@@ -156,7 +147,7 @@ export default function VentanillaUnica() {
                   <Text display={{base:'none', md:'block'}} fontSize="sm">{user?.username}</Text>
                 </HStack>
               </MenuButton>
-              <MenuList color="gray.800">
+              <MenuList color="gray.800" zIndex={1000}>
                 <MenuItem icon={<EditIcon/>} onClick={handleOpenEdit}>Mis Datos</MenuItem>
                 <MenuDivider/>
                 <MenuItem icon={<WarningIcon/>} color="red.500" onClick={()=>{servicios.auth.logout(); navigate('/')}}>Salir</MenuItem>
@@ -165,7 +156,6 @@ export default function VentanillaUnica() {
         </HStack>
       </Flex>
 
-      {/* CUERPO */}
       <Box flex="1" overflow="hidden">
         <Tabs isLazy colorScheme="red" h="100%" display="flex" flexDirection="column">
             <TabList px={8} bg="white" boxShadow="sm">
@@ -176,7 +166,7 @@ export default function VentanillaUnica() {
 
             <TabPanels flex="1" overflowY="auto" bg={COLORS.bg}>
                 
-                {/* TAB 1: MIS SOLICITUDES (Usa misSolicitudes) */}
+                {/* TABLA DE EXPEDIENTES */}
                 <TabPanel p={8}>
                     <Container maxW="container.xl">
                         <Flex justify="space-between" mb={6}>
@@ -219,18 +209,35 @@ export default function VentanillaUnica() {
                     </Container>
                 </TabPanel>
 
-                {/* TAB 2: MAPA GLOBAL (Usa puntosMapa) */}
+                {/* MAPA */}
                 <TabPanel p={0} h="100%">
                     <Box w="100%" h="100%" position="relative">
                         <MapContainer center={[19.31, -98.88]} zoom={13} style={{ height: "100%", width: "100%" }}>
-                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                            <TileLayer
+                                attribution='Tiles &copy; Esri &mdash; Source: Esri'
+                                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+                            />
                             {puntosMapa.map((repo) => (
                                 (repo.latitud && repo.longitud) && (
                                     <Marker key={repo.id} position={[repo.latitud, repo.longitud]}>
                                         <Popup>
-                                            <Text fontWeight="bold">{repo.tipo_problema}</Text>
-                                            <Text fontSize="xs">Folio: {repo.folio}</Text>
-                                            <Badge colorScheme={STATUS_CONFIG[repo.status]?.color}>{repo.status}</Badge>
+                                            <Box minW="200px">
+                                                <Text fontWeight="bold">{repo.tipo_problema}</Text>
+                                                <Text fontSize="xs" mb={1}>Folio: {repo.folio}</Text>
+                                                {/* IMAGEN DEL REPORTE */}
+                                                {repo.foto && (
+                                                    <Image 
+                                                        src={getImgUrl(repo.foto)} 
+                                                        alt="Evidencia" 
+                                                        borderRadius="md" 
+                                                        boxSize="150px" 
+                                                        objectFit="cover" 
+                                                        mb={2}
+                                                        fallbackSrc="https://via.placeholder.com/150?text=Sin+Imagen"
+                                                    />
+                                                )}
+                                                <Badge colorScheme={STATUS_CONFIG[repo.status]?.color}>{repo.status}</Badge>
+                                            </Box>
                                         </Popup>
                                     </Marker>
                                 )
@@ -243,12 +250,16 @@ export default function VentanillaUnica() {
                     </Box>
                 </TabPanel>
 
-                {/* TAB 3: NOTICIAS */}
+                {/* NOTICIAS */}
                 <TabPanel>
                     <Container maxW="container.xl">
                         <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
                             {noticias.map(n => (
                                 <Card key={n.id}>
+                                    {/* IMAGEN DE LA NOTICIA */}
+                                    {n.imagen && (
+                                        <Image src={getImgUrl(n.imagen)} h="150px" objectFit="cover" borderTopRadius="md" />
+                                    )}
                                     <CardHeader pb={0}><Heading size="sm" color={COLORS.primary}>{n.titulo}</Heading></CardHeader>
                                     <CardBody><Text fontSize="sm" noOfLines={4}>{n.contenido}</Text></CardBody>
                                 </Card>
@@ -279,6 +290,8 @@ export default function VentanillaUnica() {
                 </FormControl>
                 <FormControl><FormLabel>Dirección</FormLabel><Input value={formData.direccion} onChange={(e)=>setFormData({...formData, direccion: e.target.value})} /></FormControl>
                 <FormControl><FormLabel>Descripción</FormLabel><Textarea value={formData.desc} onChange={(e)=>setFormData({...formData, desc: e.target.value})} /></FormControl>
+                <FormControl><FormLabel>Foto (Opcional)</FormLabel><Input type="file" p={1} onChange={(e)=>setFormData({...formData, foto: e.target.files[0]})} /></FormControl>
+                
                 <Box w="full" p={4} bg="gray.50" borderRadius="md" border="1px dashed gray">
                     <Button size="sm" w="full" colorScheme={coords ? "green" : "blue"} onClick={obtenerUbicacion}>
                         {coords ? "Ubicación Guardada" : "Capturar GPS"}

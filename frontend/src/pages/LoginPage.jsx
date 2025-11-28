@@ -77,7 +77,7 @@ export function Login() {
         localStorage.setItem('access_token', loginData.access)
         localStorage.setItem('refresh_token', loginData.refresh)
         
-        // 4. Redirigir directo al mapa (Asumimos que un registro nuevo siempre es ciudadano)
+        // 4. Redirigir directo al mapa
         navigate('/inicio')
       }
 
@@ -179,14 +179,20 @@ export function Login() {
                 <Box position="absolute" top={4} left={4} zIndex={1000} bg="white" px={3} py={1} borderRadius="md" boxShadow="md">
                     <Text fontSize="xs" fontWeight="bold" color={GOB.primary}>MONITOREO EN VIVO</Text>
                 </Box>
+                
+                {/* MAPA CON ESTILO ESRI (COHERENCIA VISUAL) */}
                 <MapContainer 
                     center={[19.31, -98.88]} 
                     zoom={13} 
                     zoomControl={false}
                     style={{ height: "100%", width: "100%" }}
                 >
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    <TileLayer
+                        attribution='Tiles &copy; Esri &mdash; Source: Esri'
+                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+                    />
                 </MapContainer>
+                
                 {/* Franja decorativa roja arriba del mapa */}
                 <Box h="8px" w="100%" bg={GOB.primary} position="absolute" top={0} left={0} zIndex={1001} />
             </Box>

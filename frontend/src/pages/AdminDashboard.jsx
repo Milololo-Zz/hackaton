@@ -14,7 +14,6 @@ import { servicios } from '../api/services'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
-// Configuración visual
 const STATUS_BADGES = {
   'PENDIENTE': 'red',
   'ASIGNADO': 'blue',
@@ -25,7 +24,7 @@ const STATUS_BADGES = {
 
 const PIPA_STATUS = {
   'DISPONIBLE': { color: 'green', label: 'Disponible' },
-  'EN_RUTA': { color: 'blue', label: 'En Ruta / Trabajando' },
+  'EN_RUTA': { color: 'blue', label: 'En Ruta' },
   'TALLER': { color: 'red', label: 'Mantenimiento' },
 }
 
@@ -38,7 +37,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   
-  // --- ESTADOS PARA GESTIÓN ---
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [selectedReporte, setSelectedReporte] = useState(null)
   const [formGestion, setFormGestion] = useState({
@@ -65,6 +63,13 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // --- HELPER PARA IMÁGENES ---
+  const getImgUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `http://localhost:8000${url}`;
   }
 
   const handleGestionar = (reporte) => {
@@ -98,9 +103,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // Helper para imágenes
-  const getImgUrl = (url) => url ? (url.startsWith('http') ? url : `http://localhost:8000${url}`) : null
-
   if (loading || !dashboardData) {
     return (
       <Center h="100vh" bg="gray.100"><Spinner size="xl" color="blue.800" /><Text ml={4}>Cargando...</Text></Center>
@@ -108,11 +110,11 @@ export default function AdminDashboard() {
   }
 
   const stats = dashboardData.kpis
+  const topProblema = dashboardData.moda_problema
 
   return (
     <Box minH="100vh" bg="gray.50" p={8}>
       
-      {/* HEADER */}
       <Flex justify="space-between" align="center" mb={8} bg="white" p={4} borderRadius="lg" boxShadow="sm">
         <Box>
           <Heading size="lg" color="#691C32">Mesa de Control Operativa</Heading>
@@ -124,15 +126,13 @@ export default function AdminDashboard() {
         </Flex>
       </Flex>
 
-      {/* KPIS */}
       <SimpleGrid columns={{ base: 1, md: 4 }} spacing={5} mb={8}>
         <StatCard title="Total Expedientes" stat={stats.total_historico} icon="📂" />
         <StatCard title="Pendientes" stat={stats.pendientes_urgentes} icon="🚨" color="red.500" />
         <StatCard title="Concluidos" stat={stats.resueltos} icon="✅" color="green.500" />
-        <StatCard title="Falla Recurrente" stat={dashboardData.moda_problema.tipo} icon="⚠️" />
+        <StatCard title="Falla Recurrente" stat={topProblema.tipo} icon="⚠️" />
       </SimpleGrid>
 
-      {/* TABS DE GESTIÓN */}
       <Tabs variant="enclosed" colorScheme="blue" bg="white" borderRadius="lg" boxShadow="sm">
         <TabList px={4} pt={4}>
             <Tab fontWeight="bold">🗺️ Mapa Táctico</Tab>
@@ -142,10 +142,12 @@ export default function AdminDashboard() {
         </TabList>
 
         <TabPanels>
-            {/* PANEL 1: MAPA TÁCTICO (NUEVO) */}
             <TabPanel p={0} h="500px">
                 <MapContainer center={[19.31, -98.88]} zoom={13} style={{ height: "100%", width: "100%" }}>
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    <TileLayer
+                        attribution='Tiles &copy; Esri &mdash; Source: Esri'
+                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+                    />
                     {listaReportes.map((repo) => (
                         (repo.latitud && repo.longitud) && (
                             <Marker key={repo.id} position={[repo.latitud, repo.longitud]}>
@@ -154,8 +156,19 @@ export default function AdminDashboard() {
                                         <Badge colorScheme={STATUS_BADGES[repo.status]} mb={2}>{repo.status}</Badge>
                                         <Text fontWeight="bold" fontSize="sm">Folio: {repo.folio}</Text>
                                         <Text fontSize="xs">{repo.tipo_problema}</Text>
-                                        <Text fontSize="xs" color="gray.500" mb={2}>{repo.direccion_texto}</Text>
-                                        <Button size="xs" colorScheme="blue" w="full" onClick={() => handleGestionar(repo)}>
+                                        {/* FOTO EVIDENCIA */}
+                                        {repo.foto && (
+                                            <Image 
+                                                src={getImgUrl(repo.foto)} 
+                                                alt="Evidencia" 
+                                                borderRadius="md" 
+                                                boxSize="120px" 
+                                                objectFit="cover" 
+                                                mt={2}
+                                                fallbackSrc="https://via.placeholder.com/150?text=Sin+Imagen"
+                                            />
+                                        )}
+                                        <Button size="xs" colorScheme="blue" w="full" mt={2} onClick={() => handleGestionar(repo)}>
                                             Gestionar / Asignar
                                         </Button>
                                     </Box>
@@ -166,16 +179,16 @@ export default function AdminDashboard() {
                 </MapContainer>
             </TabPanel>
 
-            {/* PANEL 2: TABLA */}
             <TabPanel>
                 <Box overflowX="auto">
                     <Table variant="simple" size="sm">
-                        <Thead bg="gray.50"><Tr><Th>Folio</Th><Th>Tipo</Th><Th>Estatus</Th><Th>Pipa</Th><Th>Acción</Th></Tr></Thead>
+                        <Thead bg="gray.50"><Tr><Th>Folio</Th><Th>Tipo</Th><Th>Dirección</Th><Th>Estatus</Th><Th>Pipa</Th><Th>Acción</Th></Tr></Thead>
                         <Tbody>
                             {listaReportes.map(repo => (
                                 <Tr key={repo.id}>
                                     <Td fontWeight="bold">{repo.folio}</Td>
                                     <Td>{repo.tipo_problema}</Td>
+                                    <Td maxW="200px" isTruncated>{repo.direccion_texto}</Td>
                                     <Td><Badge colorScheme={STATUS_BADGES[repo.status]}>{repo.status}</Badge></Td>
                                     <Td>{repo.pipa_asignada ? <Tag size="sm" colorScheme="purple">🚛 Asignada</Tag> : '-'}</Td>
                                     <Td><Button size="xs" colorScheme="blue" onClick={() => handleGestionar(repo)}>Gestionar</Button></Td>
@@ -186,7 +199,6 @@ export default function AdminDashboard() {
                 </Box>
             </TabPanel>
 
-            {/* PANEL 3: PIPAS */}
             <TabPanel>
                 <Table variant="striped" size="sm">
                     <Thead><Tr><Th>Unidad</Th><Th>Chofer</Th><Th>Estado</Th></Tr></Thead>
@@ -202,7 +214,6 @@ export default function AdminDashboard() {
                 </Table>
             </TabPanel>
 
-            {/* PANEL 4: GRÁFICAS */}
             <TabPanel>
                 <Box h="300px">
                     <ResponsiveContainer width="100%" height="100%">
@@ -213,7 +224,6 @@ export default function AdminDashboard() {
         </TabPanels>
       </Tabs>
 
-      {/* MODAL GESTION */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />
         <ModalContent>
@@ -223,6 +233,13 @@ export default function AdminDashboard() {
                 <SimpleGrid columns={2} spacing={4} mb={4}>
                     <Box><Text fontWeight="bold" fontSize="xs" color="gray.500">PROBLEMA</Text><Text>{selectedReporte?.tipo_problema}</Text></Box>
                     <Box><Text fontWeight="bold" fontSize="xs" color="gray.500">UBICACIÓN</Text><Text fontSize="sm">{selectedReporte?.direccion_texto}</Text></Box>
+                    {/* VISUALIZAR FOTO EN EL MODAL DE GESTIÓN */}
+                    {selectedReporte?.foto && (
+                        <Box gridColumn="span 2">
+                            <Text fontWeight="bold" fontSize="xs" color="gray.500" mb={1}>EVIDENCIA CIUDADANA</Text>
+                            <Image src={getImgUrl(selectedReporte.foto)} borderRadius="md" maxH="200px" objectFit="contain" />
+                        </Box>
+                    )}
                 </SimpleGrid>
                 <FormControl mb={4}>
                     <FormLabel>Nuevo Estatus</FormLabel>
@@ -245,7 +262,7 @@ export default function AdminDashboard() {
                     <Textarea value={formGestion.nota_seguimiento} onChange={(e) => setFormGestion({...formGestion, nota_seguimiento: e.target.value})} />
                 </FormControl>
                 <FormControl>
-                    <FormLabel>Evidencia Solución</FormLabel>
+                    <FormLabel>Evidencia Solución (Foto)</FormLabel>
                     <Input type="file" p={1} onChange={(e) => setFormGestion({...formGestion, foto_solucion: e.target.files[0]})} />
                 </FormControl>
             </ModalBody>
