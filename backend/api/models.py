@@ -28,7 +28,7 @@ class Pipa(models.Model):
 # MODELO: REPORTE (Actualizado con Pipa)
 # ---------------------------------------------------------------------
 class Reporte(models.Model):
-    folio = models.CharField(max_length=10, unique=True, editable=False, null=True)
+    folio = models.CharField(max_length=20, unique=True, editable=False, null=True)
     
     TIPOS_PROBLEMA = [
         ('FUGA', 'Fuga de Agua'),

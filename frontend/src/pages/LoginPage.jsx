@@ -40,35 +40,50 @@ export function Login() {
     setLoading(true)
     try {
       if (isLogin) {
-        // LOGIN
+        // --- CASO 1: LOGIN NORMAL ---
         const data = await servicios.auth.login(formData.username, formData.password)
+        
+        // Guardar tokens
         localStorage.setItem('access_token', data.access)
         localStorage.setItem('refresh_token', data.refresh)
+        
         toast.success('Bienvenido al Sistema')
         
-        // Redirección
+        // Redirección Inteligente
         if (formData.username === 'admin' || formData.username.includes('gob')) {
             navigate('/admin-panel')
         } else {
             navigate('/inicio')
         }
+
       } else {
-        // REGISTRO
+        // --- CASO 2: REGISTRO + LOGIN AUTOMÁTICO ---
         if (formData.password !== formData.re_password) throw new Error("Las contraseñas no coinciden")
         
-        // Enviamos solo username, email y password (sin CURP)
+        // 1. Crear la cuenta
         await servicios.auth.register({
             username: formData.username,
             email: formData.email,
             password: formData.password,
             re_password: formData.re_password
         })
-        toast.success('Cuenta creada exitosamente. Por favor inicie sesión.')
-        setIsLogin(true)
+        
+        toast.success('Cuenta creada. Iniciando sesión...')
+
+        // 2. Iniciar sesión automáticamente (Login implícito)
+        const loginData = await servicios.auth.login(formData.username, formData.password)
+        
+        // 3. Guardar tokens
+        localStorage.setItem('access_token', loginData.access)
+        localStorage.setItem('refresh_token', loginData.refresh)
+        
+        // 4. Redirigir directo al mapa (Asumimos que un registro nuevo siempre es ciudadano)
+        navigate('/inicio')
       }
+
     } catch (error) {
       console.error(error)
-      const msg = error.response?.data ? JSON.stringify(error.response.data) : 'Error de credenciales'
+      const msg = error.response?.data ? JSON.stringify(error.response.data) : 'Error en la operación'
       toast.error(msg)
     } finally {
       setLoading(false)
@@ -127,7 +142,6 @@ export function Login() {
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={4}>
                             
-                            {/* CAMBIO AQUÍ: YA NO DICE CURP */}
                             <FormControl>
                                 <FormLabel fontSize="sm">Nombre de Usuario</FormLabel>
                                 <Input name="username" bg="white" onChange={handleChange} value={formData.username} placeholder="Ej. juanperez" />
