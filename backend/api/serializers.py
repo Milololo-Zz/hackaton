@@ -36,11 +36,12 @@ class ReporteSerializer(serializers.ModelSerializer):
     latitud = serializers.SerializerMethodField()
     longitud = serializers.SerializerMethodField()
     usuario_nombre = serializers.CharField(source='usuario.username', read_only=True)
+    ubicacion = serializers.CharField(read_only=True)
 
     class Meta:
         model = Reporte
         fields = [
-            'id', 'titulo', 'descripcion', 'tipo_problema', 
+            'id', 'descripcion', 'tipo_problema', 
             'latitud', 'longitud', 'ubicacion', # Enviamos ambos formatos
             'foto', 'status', 'fecha_hora', 
             'usuario', 'usuario_nombre', 'validaciones', 'prioridad'
