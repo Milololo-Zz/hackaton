@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -26,7 +25,7 @@ SECRET_KEY = 'django-insecure-0k(bw!zk5t4*##nu2$ibma5m=mu24@qct8i0-4nlc6#zg@%fwj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -38,15 +37,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.gis',
-    'rest_framework',
+    'rest_framework',        
     'corsheaders',
     'djoser',
     'drf_spectacular',
     'api',
-
-
-
+    
+    
+    
 ]
 
 MIDDLEWARE = [
@@ -83,10 +81,11 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+import os
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'hackaton_db'),
         'USER': os.environ.get('DB_USER', 'hackaton_user'),
         'PASSWORD': os.environ.get('DB_PASSWORD', 'hackaton_password'),
