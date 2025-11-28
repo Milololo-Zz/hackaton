@@ -1,60 +1,74 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Reporte, PerfilCiudadano, Noticia, Pozo, Validacion
+from .models import Reporte, PerfilCiudadano, Noticia, Pozo, Validacion, Pipa
 
-# 1. Serializador del Perfil (Para incrustarlo en el usuario)
+# --- SERIALIZADORES AUXILIARES ---
 class PerfilCiudadanoSerializer(serializers.ModelSerializer):
     class Meta:
         model = PerfilCiudadano
         fields = ['colonia', 'telefono']
 
-
-# 2. Serializador de Usuario (Con Perfil Incluido)
 class UserSerializer(serializers.ModelSerializer):
-    perfil = PerfilCiudadanoSerializer() # Nested Serializer
-
+    perfil = PerfilCiudadanoSerializer()
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'perfil']
     
-    # Lógica para actualizar Usuario y Perfil al mismo tiempo
     def update(self, instance, validated_data):
         perfil_data = validated_data.pop('perfil', {})
         perfil = instance.perfil
-        
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.save()
-
         perfil.colonia = perfil_data.get('colonia', perfil.colonia)
         perfil.telefono = perfil_data.get('telefono', perfil.telefono)
         perfil.save()
         return instance
 
-# 3. Serializador de Reporte (Con Lat/Lon separados para el Mapa)
-class ReporteSerializer(serializers.ModelSerializer):
+class PipaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pipa
+        fields = '__all__'
+
+# --- SERIALIZADOR CIUDADANO (Restringido) ---
+class ReporteCiudadanoSerializer(serializers.ModelSerializer):
     latitud = serializers.SerializerMethodField()
     longitud = serializers.SerializerMethodField()
     usuario_nombre = serializers.CharField(source='usuario.username', read_only=True)
-    ubicacion = serializers.CharField()
+    fecha_formato = serializers.DateTimeField(source='fecha_hora', format="%d/%m/%Y %H:%M", read_only=True)
+    ubicacion = serializers.CharField() 
 
     class Meta:
         model = Reporte
         fields = [
-            'id', 'descripcion', 'tipo_problema', 
-            'latitud', 'longitud', 'ubicacion', # Enviamos ambos formatos
-            'foto', 'status', 'fecha_hora', 
-            'usuario', 'usuario_nombre', 'validaciones', 'prioridad'
+            'id', 'folio', 'tipo_problema', 'descripcion', 'direccion_texto',
+            'latitud', 'longitud', 'ubicacion', 
+            'foto', 'status', 'fecha_formato', 
+            'usuario', 'usuario_nombre', 
+            'nota_seguimiento', 'foto_solucion', 'validaciones', 'prioridad'
         ]
-        read_only_fields = ['status', 'fecha_hora', 'validaciones', 'prioridad','nota_seguimiento', 'foto_solucion','nota_seguimiento', 'foto_solucion']
+        # EL CIUDADANO NO PUEDE EDITAR ESTO:
+        read_only_fields = [
+            'id', 'folio', 'status', 'fecha_formato', 'usuario', 'usuario_nombre',
+            'nota_seguimiento', 'foto_solucion', 'validaciones', 'prioridad',
+            'pipa_asignada'
+        ]
 
     def get_latitud(self, obj):
         return obj.ubicacion.y if obj.ubicacion else None
-
     def get_longitud(self, obj):
         return obj.ubicacion.x if obj.ubicacion else None
 
-# 4. Serializadores Simples
+# --- SERIALIZADOR ADMIN (Poder Total) ---
+class ReporteAdminSerializer(ReporteCiudadanoSerializer):
+    # Hereda todo del ciudadano, pero sobreescribe los read_only
+    class Meta(ReporteCiudadanoSerializer.Meta):
+        # El Admin SÍ puede editar status, notas y asignar pipas
+        read_only_fields = [
+            'id', 'folio', 'fecha_formato', 'usuario', 'usuario_nombre', 'validaciones'
+        ]
+
+# --- OTROS ---
 class NoticiaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Noticia
@@ -63,11 +77,9 @@ class NoticiaSerializer(serializers.ModelSerializer):
 class PozoSerializer(serializers.ModelSerializer):
     latitud = serializers.SerializerMethodField()
     longitud = serializers.SerializerMethodField()
-
     class Meta:
         model = Pozo
         fields = '__all__'
-
     def get_latitud(self, obj):
         return obj.ubicacion.y
     def get_longitud(self, obj):
