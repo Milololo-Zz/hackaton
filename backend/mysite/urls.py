@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from api.views import ReporteViewSet, NoticiaViewSet, PozoViewSet, PerfilViewSet
 
 # Router para tus ViewSets (Aquí irán tus futuros endpoints)
 router = DefaultRouter()
